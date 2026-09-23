@@ -62,7 +62,7 @@ class RiskAnalysisRequest(BaseModel):
 
 
 class RiskAnalysisResponse(BaseModel):
-    model_config = ConfigDict(use_enum_values=True)
+    model_config = ConfigDict(extra="allow", use_enum_values=True)
 
     customer_id: str = Field(..., description="Customer identifier matching the request", example="C1001")
     insurance_type: InsuranceType = Field(..., description="Insurance line analyzed", example="HEALTH")
@@ -77,3 +77,20 @@ class RiskAnalysisResponse(BaseModel):
         default_factory=dict,
         description="Detailed metric breakdown providing mathematical transparency for downstream AI agents"
     )
+
+    # Extended fields seamlessly supporting React frontend and LangGraph agent integration
+    ai_summary: Optional[str] = Field(None, description="Agentic AI narrative summary of risk evaluation")
+    retrieved_guidelines: Optional[List[Any]] = Field(default_factory=list, description="RAG retrieved policy guidelines")
+    dimensionScores: Optional[List[Any]] = Field(default_factory=list, description="Dimensional scores for radar/bar charts")
+    exposureDistribution: Optional[List[Any]] = Field(default_factory=list, description="Factor weight distribution for charts")
+    plans: Optional[List[Any]] = Field(default_factory=list, description="Recommended insurance policies with predicted suitability")
+    timestamp: Optional[str] = Field(None, description="ISO timestamp of analysis")
+
+
+class ChatRequest(BaseModel):
+    message: str = Field(..., description="User question or prompt for InsureAI Copilot")
+    history: Optional[List[Any]] = Field(default_factory=list, description="Conversation history")
+
+
+class ChatResponse(BaseModel):
+    reply: str = Field(..., description="AI Copilot response text")
