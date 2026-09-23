@@ -3,6 +3,14 @@ import os
 import json
 import re
 from typing import Dict, Any, Optional
+
+# Load local environment variables if python-dotenv is present
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
+
 from backend.llm.prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE
 
 
@@ -108,8 +116,8 @@ def get_llm():
                 base_url=base_url,
                 temperature=0.2
             )
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Warning: NVIDIA LLM init error: {e}")
 
     # 2. Google Gemini
     if provider in ["gemini", "google"] or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
@@ -121,8 +129,8 @@ def get_llm():
                 google_api_key=api_key,
                 temperature=0.2
             )
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Warning: Gemini LLM init error: {e}")
 
     # 3. OpenAI
     if provider == "openai" or os.getenv("OPENAI_API_KEY"):
@@ -133,8 +141,8 @@ def get_llm():
                 api_key=os.getenv("OPENAI_API_KEY"),
                 temperature=0.2
             )
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Warning: OpenAI LLM init error: {e}")
 
     # 4. Ollama (Local)
     if provider == "ollama" or _is_ollama_reachable():
@@ -145,8 +153,8 @@ def get_llm():
                 base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
                 temperature=0.2
             )
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Warning: Ollama LLM init error: {e}")
 
     return FallbackRiskLLM()
 
@@ -167,12 +175,16 @@ def parse_llm_json_response(raw_text: str, fallback_data: Dict[str, Any]) -> Dic
     try:
         clean_text = raw_text.strip()
         # Remove markdown code fences if present
-        if clean_text.startswith("```"):
-            clean_text = re.sub(r"^```(?:json)?\n?", "", clean_text)
-            clean_text = re.sub(r"\n?```$", "", clean_text)
+        if "```" in clean_text:
+            match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", clean_text, re.DOTALL)
+            if match:
+                clean_text = match.group(1)
+            else:
+                clean_text = re.sub(r"^```(?:json)?\n?", "", clean_text)
+                clean_text = re.sub(r"\n?```$", "", clean_text)
         data = json.loads(clean_text)
         if isinstance(data, dict) and "summary" in data:
             return data
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Note: JSON parse fallback: {e}")
     return fallback_data
