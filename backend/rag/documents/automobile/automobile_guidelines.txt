@@ -1,0 +1,6 @@
+[AUTOMOBILE UNDERWRITING GUIDELINES]
+1. Driver Experience & Age: Drivers under 25 or with less than 2 years of driving experience are categorized under elevated risk tiers due to statistical accident frequency.
+2. Vehicle Age & Make: Vehicles older than 8 years or high-performance/sports variants incur higher risk ratings and maintenance cost multipliers.
+3. Driving Record & Violations: Multiple moving violations or at-fault accident history within the past 36 months significantly increase the calculated risk score.
+4. Annual Mileage: Annual driving distance exceeding 20,000 km classifies the policy as high-exposure, while low-mileage (< 8,000 km) qualifies for discounted low-risk tiers.
+5. Location & Security: Vehicles garaged in high-density urban areas with higher theft statistics require anti-theft device validation to maintain standard tier pricing.

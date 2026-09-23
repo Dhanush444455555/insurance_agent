@@ -1,0 +1,6 @@
+[LIFE UNDERWRITING GUIDELINES]
+1. Age & Mortality Curves: Term life underwriting strictly relies on actuarial mortality tables. Premium rates and risk multipliers rise progressively above age 45.
+2. Tobacco & Nicotine Use: Nicotine/tobacco users (cigarettes, vaping, chewing tobacco within 24 months) are assigned to higher risk categories with up to 50-100% higher mortality rates.
+3. Hazardous Occupations & Hobbies: Occupations involving aviation, deep-sea diving, underground mining, or extreme sports are subject to occupational ratings or exclusions.
+4. Income-to-Coverage Multiplier: Maximum allowable Sum Assured is bounded by Human Life Value (HLV) formulas (e.g., 20-25x annual income for under age 35, decreasing to 10-15x for ages 45-55).
+5. Medical Tele-MER / Blood Profiles: High sum assured thresholds trigger mandatory tele-medical examinations, lipid profile, and HbA1c tests.

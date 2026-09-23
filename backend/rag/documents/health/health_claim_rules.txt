@@ -1,0 +1,5 @@
+[HEALTH CLAIMS & ADJUDICATION RULES]
+1. Waiting Periods: Standard 30-day initial waiting period applies for all non-emergency hospitalizations. Specific pre-existing disease waiting periods range from 1 to 3 years.
+2. Hospital Network & Room Rent: Claims at network hospitals receive cashless settlement. Room rent capping is typically 1% of Sum Insured per day for standard plans.
+3. Co-payment Requirements: Applicants aged 60+ or those with specific high-risk disclosures may be subject to a 10-20% mandatory co-payment on non-critical claims.
+4. Exclusion Criteria: Cosmetic treatments, experimental therapies, and self-inflicted injuries are excluded from claim settlement coverage.
