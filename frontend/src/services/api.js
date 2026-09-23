@@ -1,9 +1,11 @@
 /**
  * API service for communicating with the backend risk evaluation service.
- * Endpoint: POST /api/analyze-risk
+ * Endpoints:
+ * - POST /api/analyze-risk
+ * - POST /api/chat
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 /**
  * Normalizes backend response or calculates fallback simulation adhering to the agreed API contract.
@@ -92,18 +94,16 @@ function generateDynamicAssessment(customerData) {
     }
   ];
 
-  // ML predicted suitability
-  // Wording rule: STRICTLY "Predicted suitability", never call one universally "best"
   let planA_score = 62;
   let planB_score = 87;
   let planC_score = 74;
 
   if (riskLevel === 'HIGH') {
     planA_score = 54;
-    planB_score = 89; // High-coverage/risk-mitigated plan suits high risk better
+    planB_score = 89;
     planC_score = 71;
   } else if (riskLevel === 'LOW') {
-    planA_score = 88; // Essential saver suits low risk
+    planA_score = 88;
     planB_score = 65;
     planC_score = 82;
   }
@@ -171,19 +171,20 @@ function generateDynamicAssessment(customerData) {
  */
 export async function analyzeRisk(customerData) {
   const payload = {
-    customer_id: customerData.customerId,
-    age: Number(customerData.age),
-    income: Number(customerData.income),
-    claims_count: Number(customerData.claimsCount),
-    total_claim_amount: Number(customerData.totalClaimAmount),
-    location_risk: customerData.locationRisk,
-    vehicle_risk: customerData.vehicleRisk,
-    required_coverage: customerData.requiredCoverage,
+    customer_id: customerData.customerId || 'CUST-DEMO',
+    insurance_type: (customerData.insuranceType || 'HEALTH').toUpperCase(),
+    age: Number(customerData.age) || 30,
+    income: Number(customerData.income) || 50000,
+    claims_count: Number(customerData.claimsCount) || 0,
+    total_claim_amount: Number(customerData.totalClaimAmount) || 0,
+    location_risk: (customerData.locationRisk || 'MEDIUM').toUpperCase(),
+    vehicle_risk: (customerData.vehicleRisk || 'MEDIUM').toUpperCase(),
+    required_coverage: customerData.requiredCoverage || 'Comprehensive',
   };
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
 
     const response = await fetch(`${API_BASE_URL}/api/analyze-risk`, {
       method: 'POST',
@@ -199,7 +200,6 @@ export async function analyzeRisk(customerData) {
 
     if (response.ok) {
       const data = await response.json();
-      // Normalize backend payload if keys differ slightly
       return {
         customerId: data.customer_id || data.customerId || customerData.customerId,
         riskScore: data.risk_score ?? data.riskScore ?? 75,
@@ -221,14 +221,37 @@ export async function analyzeRisk(customerData) {
         isLiveBackend: true
       };
     } else {
-      console.warn(`Backend responded with HTTP ${response.status}. Utilizing contract fallback for evaluation.`);
       return generateDynamicAssessment(customerData);
     }
   } catch (err) {
-    console.info('Backend unreachable or in development. Executing client-side risk engine fallback:', err.message);
-    // Return high-fidelity fallback adhering directly to agreed API specification
     return generateDynamicAssessment(customerData);
   }
+}
+
+/**
+ * AI Copilot Chat Assistant: POST /api/chat
+ */
+export async function sendChatMessage(message, history = []) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ message, history }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.reply;
+    }
+  } catch (e) {
+    console.warn('Backend chat offline, generating local response');
+  }
+
+  // Local quick fallback response
+  return "I'm your InsureAI Copilot! Based on our underwriting guidelines, risk assessment evaluates health disclosures, vehicle metrics, and mortality actuarial tables. What specific policy question can I answer for you?";
 }
 
 /**
