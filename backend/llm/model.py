@@ -95,7 +95,23 @@ def get_llm():
     """Factory returning configured LLM chat instance or FallbackRiskLLM."""
     provider = os.getenv("LLM_PROVIDER", "").lower()
     
-    # Try Google Gemini
+    # 1. NVIDIA NIM / Cloud
+    if provider in ["nvidia", "nim"] or os.getenv("NVIDIA_API_KEY"):
+        try:
+            from langchain_openai import ChatOpenAI
+            api_key = os.getenv("NVIDIA_API_KEY")
+            base_url = os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1")
+            model = os.getenv("NVIDIA_MODEL", "meta/llama-3.1-8b-instruct")
+            return ChatOpenAI(
+                model=model,
+                api_key=api_key,
+                base_url=base_url,
+                temperature=0.2
+            )
+        except Exception:
+            pass
+
+    # 2. Google Gemini
     if provider in ["gemini", "google"] or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
         try:
             from langchain_google_genai import ChatGoogleGenerativeAI
@@ -108,7 +124,7 @@ def get_llm():
         except Exception:
             pass
 
-    # Try OpenAI
+    # 3. OpenAI
     if provider == "openai" or os.getenv("OPENAI_API_KEY"):
         try:
             from langchain_openai import ChatOpenAI
@@ -120,8 +136,8 @@ def get_llm():
         except Exception:
             pass
 
-    # Try Ollama
-    if provider == "ollama":
+    # 4. Ollama (Local)
+    if provider == "ollama" or _is_ollama_reachable():
         try:
             from langchain_community.chat_models import ChatOllama
             return ChatOllama(
@@ -135,14 +151,25 @@ def get_llm():
     return FallbackRiskLLM()
 
 
+def _is_ollama_reachable() -> bool:
+    """Checks if local Ollama server is running."""
+    import urllib.request
+    try:
+        url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        req = urllib.request.urlopen(url, timeout=0.8)
+        return req.getcode() == 200
+    except Exception:
+        return False
+
+
 def parse_llm_json_response(raw_text: str, fallback_data: Dict[str, Any]) -> Dict[str, Any]:
     """Helper to parse JSON from LLM markdown/text output."""
     try:
         clean_text = raw_text.strip()
         # Remove markdown code fences if present
         if clean_text.startswith("```"):
-            clean_text = re.sub(r"^```(?:json)?\n", "", clean_text)
-            clean_text = re.sub(r"\n```$", "", clean_text)
+            clean_text = re.sub(r"^```(?:json)?\n?", "", clean_text)
+            clean_text = re.sub(r"\n?```$", "", clean_text)
         data = json.loads(clean_text)
         if isinstance(data, dict) and "summary" in data:
             return data
