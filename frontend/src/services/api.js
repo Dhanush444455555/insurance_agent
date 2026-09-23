@@ -3,9 +3,45 @@
  * Endpoints:
  * - POST /api/analyze-risk
  * - POST /api/chat
+ * - GET  /api/health
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const CONFIGURED_URL = import.meta.env.VITE_API_URL || '';
+
+/**
+ * Robust fetch helper:
+ * Tries Vite proxy (relative /api), then direct localhost:8000, then 127.0.0.1:8000
+ */
+async function resilientFetch(endpoint, options = {}) {
+  const candidateUrls = [
+    CONFIGURED_URL ? `${CONFIGURED_URL}${endpoint}` : null,
+    endpoint, // relative via Vite proxy
+    `http://127.0.0.1:8000${endpoint}`,
+    `http://localhost:8000${endpoint}`,
+  ].filter(Boolean);
+
+  for (const url of candidateUrls) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        return response;
+      }
+    } catch {
+      // Continue to next candidate URL
+    }
+  }
+
+  throw new Error(`All candidate backend endpoints failed for ${endpoint}`);
+}
 
 /**
  * Pre-loaded synthetic customer database.
@@ -323,8 +359,8 @@ function generateDynamicAssessment(customerData) {
  */
 export async function analyzeRisk(customerData) {
   const payload = {
-    customer_id: customerData.customerId || 'CUST-DEMO',
-    insurance_type: (customerData.insuranceType || 'HEALTH').toUpperCase(),
+    customer_id: customerData.customerId || 'CUST-1001',
+    insurance_type: (customerData.insuranceType || 'AUTOMOBILE').toUpperCase(),
     age: Number(customerData.age) || 30,
     income: Number(customerData.income) || 50000,
     claims_count: Number(customerData.claimsCount) || 0,
@@ -335,20 +371,14 @@ export async function analyzeRisk(customerData) {
   };
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
-
-    const response = await fetch(`${API_BASE_URL}/api/analyze-risk`, {
+    const response = await resilientFetch('/api/analyze-risk', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
       body: JSON.stringify(payload),
-      signal: controller.signal,
     });
-
-    clearTimeout(timeoutId);
 
     if (response.ok) {
       const data = await response.json();
@@ -378,11 +408,10 @@ export async function analyzeRisk(customerData) {
         isLiveBackend: true
       };
     } else {
-      console.warn(`Backend responded with HTTP ${response.status}. Utilizing contract fallback.`);
       return generateDynamicAssessment(customerData);
     }
   } catch (err) {
-    console.info('Backend unreachable. Executing client-side risk engine fallback:', err.message);
+    console.info('Backend unreachable, utilizing client-side risk engine fallback:', err.message);
     return generateDynamicAssessment(customerData);
   }
 }
@@ -392,7 +421,7 @@ export async function analyzeRisk(customerData) {
  */
 export async function sendChatMessage(message, history = []) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/chat`, {
+    const response = await resilientFetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -413,11 +442,11 @@ export async function sendChatMessage(message, history = []) {
 }
 
 /**
- * Optional utility to verify backend health
+ * Utility to verify backend health
  */
 export async function checkBackendHealth() {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/health`, { method: 'GET' });
+    const res = await resilientFetch('/api/health', { method: 'GET' });
     return res.ok;
   } catch {
     return false;

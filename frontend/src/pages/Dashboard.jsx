@@ -9,7 +9,7 @@ import PlanCard from '../components/PlanCard';
 import AIReport from '../components/AIReport';
 import LoadingState from '../components/LoadingState';
 import AIChatBot from '../components/AIChatBot';
-import { analyzeRisk, getCustomerById } from '../services/api';
+import { analyzeRisk, getCustomerById, checkBackendHealth } from '../services/api';
 
 export default function Dashboard() {
   const [selectedProfile, setSelectedProfile] = useState(getCustomerById('CUST-1001'));
@@ -18,9 +18,11 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [lastSubmissionTime, setLastSubmissionTime] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isBackendConnected, setIsBackendConnected] = useState(false);
 
-  // Initial demonstration load with default CUST-1001
+  // Initial demonstration load with default CUST-1001 & backend health probe
   useEffect(() => {
+    checkBackendHealth().then((live) => setIsBackendConnected(live));
     const initialCustomer = getCustomerById('CUST-1001');
     setSelectedProfile(initialCustomer);
     handleAnalyze(initialCustomer);
@@ -70,6 +72,13 @@ export default function Dashboard() {
 
           {/* System Badges & Copilot Button */}
           <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs">
+              <span className={`w-2 h-2 rounded-full ${isBackendConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
+              <span className="text-slate-300 font-mono text-[11px]">
+                {isBackendConnected ? 'FastAPI Connected' : 'Local Engine Ready'}
+              </span>
+            </div>
+
             <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300">
               <Cpu className="w-3.5 h-3.5 text-cyan-400" />
               <span className="text-slate-400">Pipeline:</span>
