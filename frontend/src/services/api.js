@@ -6,6 +6,115 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 /**
+ * Pre-loaded synthetic customer database.
+ * Enables instant lookups by Customer ID for demonstration.
+ */
+export const SYNTHETIC_CUSTOMERS = {
+  'CUST-1001': {
+    customerId: 'CUST-1001',
+    name: 'Sarah Jenkins',
+    age: 24,
+    income: 42000,
+    claimsCount: 3,
+    totalClaimAmount: 18500,
+    locationRisk: 'High',
+    vehicleRisk: 'High',
+    requiredCoverage: 'Comprehensive',
+    tier: 'High Risk Exposure',
+  },
+  'CUST-1002': {
+    customerId: 'CUST-1002',
+    name: 'Marcus Vance',
+    age: 46,
+    income: 135000,
+    claimsCount: 0,
+    totalClaimAmount: 0,
+    locationRisk: 'Low',
+    vehicleRisk: 'Low',
+    requiredCoverage: 'Standard',
+    tier: 'Preferred Low Risk',
+  },
+  'CUST-1003': {
+    customerId: 'CUST-1003',
+    name: 'Elena Rostova',
+    age: 36,
+    income: 88000,
+    claimsCount: 1,
+    totalClaimAmount: 4200,
+    locationRisk: 'Medium',
+    vehicleRisk: 'Medium',
+    requiredCoverage: 'Comprehensive',
+    tier: 'Moderate Risk',
+  },
+  'CUST-1004': {
+    customerId: 'CUST-1004',
+    name: 'David Kim',
+    age: 22,
+    income: 38000,
+    claimsCount: 2,
+    totalClaimAmount: 9400,
+    locationRisk: 'High',
+    vehicleRisk: 'Medium',
+    requiredCoverage: 'Basic',
+    tier: 'Young Driver Elevated Risk',
+  },
+  'CUST-1005': {
+    customerId: 'CUST-1005',
+    name: 'Amanda Bailey',
+    age: 52,
+    income: 165000,
+    claimsCount: 0,
+    totalClaimAmount: 0,
+    locationRisk: 'Low',
+    vehicleRisk: 'Low',
+    requiredCoverage: 'Premium',
+    tier: 'Executive Low Risk',
+  },
+};
+
+/**
+ * Retrieves a customer profile by ID.
+ * If not in pre-loaded database, generates a deterministic synthetic profile from the ID string.
+ */
+export function getCustomerById(customerId) {
+  const cleanId = (customerId || '').trim().toUpperCase();
+  if (SYNTHETIC_CUSTOMERS[cleanId]) {
+    return { ...SYNTHETIC_CUSTOMERS[cleanId] };
+  }
+
+  // Hash-based deterministic generator for arbitrary customer IDs entered by user
+  let hash = 0;
+  for (let i = 0; i < cleanId.length; i++) {
+    hash = (hash << 5) - hash + cleanId.charCodeAt(i);
+    hash |= 0;
+  }
+  const absHash = Math.abs(hash);
+
+  const ages = [23, 29, 34, 42, 51, 63];
+  const incomes = [35000, 52000, 78000, 95000, 125000, 160000];
+  const claimCounts = [0, 1, 2, 3];
+  const locations = ['Low', 'Medium', 'High'];
+  const vehicles = ['Low', 'Medium', 'High'];
+  const coverages = ['Basic', 'Standard', 'Comprehensive', 'Premium'];
+
+  const claimsCount = claimCounts[absHash % claimCounts.length];
+  const totalClaimAmount = claimsCount === 0 ? 0 : Math.round(((absHash % 18) + 2) * 1250);
+
+  return {
+    customerId: cleanId || 'CUST-1001',
+    name: `Policyholder ${cleanId.replace(/[^0-9]/g, '') || '901'}`,
+    age: ages[absHash % ages.length],
+    income: incomes[absHash % incomes.length],
+    claimsCount,
+    totalClaimAmount,
+    locationRisk: locations[absHash % locations.length],
+    vehicleRisk: vehicles[absHash % vehicles.length],
+    requiredCoverage: coverages[absHash % coverages.length],
+    tier: claimsCount >= 2 ? 'High Risk' : claimsCount === 1 ? 'Moderate Risk' : 'Low Risk',
+  };
+}
+
+/**
  * Normalizes backend response or calculates fallback simulation adhering to the agreed API contract.
  */
 function generateDynamicAssessment(customerData) {
@@ -100,21 +209,62 @@ function generateDynamicAssessment(customerData) {
 
   if (riskLevel === 'HIGH') {
     planA_score = 54;
-    planB_score = 89; // High-coverage/risk-mitigated plan suits high risk better
+    planB_score = 89;
     planC_score = 71;
   } else if (riskLevel === 'LOW') {
-    planA_score = 88; // Essential saver suits low risk
+    planA_score = 88;
     planB_score = 65;
     planC_score = 82;
   }
 
+  // Chart data: Dimensional Breakdown (Customer vs Industry Benchmark)
+  const dimensionScores = [
+    {
+      dimension: 'Claims Propensity',
+      score: Math.min(Math.round(claimsCount * 28 + (totalClaimAmount > 10000 ? 25 : 10)), 100),
+      benchmark: 35,
+    },
+    {
+      dimension: 'Territorial Hazard',
+      score: locRisk === 'high' ? 85 : locRisk === 'medium' ? 52 : 22,
+      benchmark: 45,
+    },
+    {
+      dimension: 'Vehicle Severity',
+      score: vehRisk === 'high' ? 82 : vehRisk === 'medium' ? 50 : 25,
+      benchmark: 40,
+    },
+    {
+      dimension: 'Financial Exposure',
+      score: income < 40000 ? 78 : income < 80000 ? 48 : 20,
+      benchmark: 38,
+    },
+  ];
+
+  // Chart data: Risk Exposure Pie/Donut Distribution
+  const claimWeight = Math.max(claimsCount * 15 + (totalClaimAmount > 5000 ? 20 : 5), 10);
+  const locWeight = locRisk === 'high' ? 30 : locRisk === 'medium' ? 20 : 10;
+  const vehWeight = vehRisk === 'high' ? 25 : vehRisk === 'medium' ? 18 : 10;
+  const demoWeight = age < 25 ? 25 : age > 60 ? 20 : 12;
+  const totalWeight = claimWeight + locWeight + vehWeight + demoWeight;
+
+  const exposureDistribution = [
+    { name: 'Claims Loss History', value: Math.round((claimWeight / totalWeight) * 100), color: '#f43f5e' },
+    { name: 'Territorial Risk', value: Math.round((locWeight / totalWeight) * 100), color: '#06b6d4' },
+    { name: 'Vehicle Risk Class', value: Math.round((vehWeight / totalWeight) * 100), color: '#818cf8' },
+    { name: 'Demographic Exposure', value: Math.round((demoWeight / totalWeight) * 100), color: '#f59e0b' },
+  ];
+
   return {
-    customerId: customerData.customerId || 'CUST-DEMO',
+    customerId: customerData.customerId || 'CUST-1001',
+    customerProfile: customerData,
     riskScore,
     riskLevel,
     riskFactors,
     aiSummary: summaryPrefix,
     retrievedGuidelines,
+    dimensionScores,
+    exposureDistribution,
     plans: [
       {
         id: 'plan_a',
@@ -183,7 +333,7 @@ export async function analyzeRisk(customerData) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
 
     const response = await fetch(`${API_BASE_URL}/api/analyze-risk`, {
       method: 'POST',
@@ -199,15 +349,19 @@ export async function analyzeRisk(customerData) {
 
     if (response.ok) {
       const data = await response.json();
-      // Normalize backend payload if keys differ slightly
+      const fallbackData = generateDynamicAssessment(customerData);
+
       return {
         customerId: data.customer_id || data.customerId || customerData.customerId,
-        riskScore: data.risk_score ?? data.riskScore ?? 75,
-        riskLevel: (data.risk_level || data.riskLevel || 'MEDIUM').toUpperCase(),
-        riskFactors: data.risk_factors || data.riskFactors || [],
-        aiSummary: data.ai_summary || data.aiSummary || data.summary || '',
-        retrievedGuidelines: data.retrieved_guidelines || data.guidelines || [],
-        plans: (data.plans || []).map((p, idx) => ({
+        customerProfile: customerData,
+        riskScore: data.risk_score ?? data.riskScore ?? fallbackData.riskScore,
+        riskLevel: (data.risk_level || data.riskLevel || fallbackData.riskLevel).toUpperCase(),
+        riskFactors: data.risk_factors || data.riskFactors || fallbackData.riskFactors,
+        aiSummary: data.ai_summary || data.aiSummary || data.summary || fallbackData.aiSummary,
+        retrievedGuidelines: data.retrieved_guidelines || data.guidelines || fallbackData.retrievedGuidelines,
+        dimensionScores: data.dimension_scores || data.dimensionScores || fallbackData.dimensionScores,
+        exposureDistribution: data.exposure_distribution || data.exposureDistribution || fallbackData.exposureDistribution,
+        plans: (data.plans || fallbackData.plans).map((p, idx) => ({
           id: p.id || `plan_${idx}`,
           name: p.name || `Plan ${String.fromCharCode(65 + idx)}`,
           type: p.type || 'Standard Policy',
@@ -221,24 +375,11 @@ export async function analyzeRisk(customerData) {
         isLiveBackend: true
       };
     } else {
-      console.warn(`Backend responded with HTTP ${response.status}. Utilizing contract fallback for evaluation.`);
+      console.warn(`Backend responded with HTTP ${response.status}. Utilizing contract fallback.`);
       return generateDynamicAssessment(customerData);
     }
   } catch (err) {
-    console.info('Backend unreachable or in development. Executing client-side risk engine fallback:', err.message);
-    // Return high-fidelity fallback adhering directly to agreed API specification
+    console.info('Backend unreachable. Executing client-side risk engine fallback:', err.message);
     return generateDynamicAssessment(customerData);
-  }
-}
-
-/**
- * Optional utility to verify backend health
- */
-export async function checkBackendHealth() {
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/health`, { method: 'GET' });
-    return res.ok;
-  } catch {
-    return false;
   }
 }

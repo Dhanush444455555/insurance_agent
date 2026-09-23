@@ -1,39 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Sparkles, Activity, AlertCircle, RefreshCw, CheckCircle, ExternalLink, Cpu } from 'lucide-react';
+import { Shield, Sparkles, Activity, AlertCircle, RefreshCw, Cpu, Layers } from 'lucide-react';
 import CustomerForm from '../components/CustomerForm';
+import CustomerProfileCard from '../components/CustomerProfileCard';
 import RiskCard from '../components/RiskCard';
 import RiskFactors from '../components/RiskFactors';
+import RiskCharts from '../components/RiskCharts';
 import PlanCard from '../components/PlanCard';
 import AIReport from '../components/AIReport';
 import LoadingState from '../components/LoadingState';
-import { analyzeRisk } from '../services/api';
+import { analyzeRisk, getCustomerById } from '../services/api';
 
 export default function Dashboard() {
+  const [selectedProfile, setSelectedProfile] = useState(getCustomerById('CUST-1001'));
   const [result, setResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [lastSubmissionTime, setLastSubmissionTime] = useState(null);
 
-  // Initial demonstration load
+  // Initial demonstration load with default CUST-1001
   useEffect(() => {
-    handleAnalyze({
-      customerId: 'CUST-94021',
-      age: 32,
-      income: 85000,
-      claimsCount: 2,
-      totalClaimAmount: 12500,
-      locationRisk: 'High',
-      vehicleRisk: 'Medium',
-      requiredCoverage: 'Comprehensive',
-    });
+    const initialCustomer = getCustomerById('CUST-1001');
+    setSelectedProfile(initialCustomer);
+    handleAnalyze(initialCustomer);
   }, []);
 
-  const handleAnalyze = async (formData) => {
+  const handleAnalyze = async (customerProfile) => {
     setIsLoading(true);
     setError(null);
+    setSelectedProfile(customerProfile);
 
     try {
-      const data = await analyzeRisk(formData);
+      const data = await analyzeRisk(customerProfile);
       setResult(data);
       setLastSubmissionTime(new Date().toLocaleTimeString());
     } catch (err) {
@@ -45,7 +42,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b1120] text-slate-100 pb-16">
+    <div className="min-h-screen bg-[#0b1120] text-slate-100 pb-20">
       {/* Top Navigation Bar */}
       <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -60,7 +57,7 @@ export default function Dashboard() {
                   InsureAI RiskLens
                 </h1>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold">
-                  v2.4
+                  v2.5
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 hidden sm:block">
@@ -69,16 +66,16 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* System & Team Status Badges */}
+          {/* System Badges */}
           <div className="flex items-center gap-3">
             <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span className="text-slate-300 font-mono text-[11px]">Member 4: Frontend Live</span>
+              <span className="text-slate-300 font-mono text-[11px]">Member 4: Frontend Ready</span>
             </div>
 
             <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300">
               <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden sm:inline text-slate-400">Pipeline:</span>
+              <span className="hidden sm:inline text-slate-400">Architecture:</span>
               <span className="font-mono text-cyan-300 text-[11px]">FastAPI + LangGraph + RAG</span>
             </div>
           </div>
@@ -91,29 +88,34 @@ export default function Dashboard() {
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
           <div>
             <h2 className="text-2xl font-bold text-white tracking-tight">
-              Underwriting Risk Dashboard
+              Underwriting Intelligence Dashboard
             </h2>
             <p className="text-xs text-slate-400 mt-1">
-              Real-time actuarial loss profiling, policy guidelines retrieval (RAG), and multiclass plan prediction.
+              Enter any Customer ID to retrieve the actuarial profile, visualize exposure charts, and generate AI recommendations.
             </p>
           </div>
 
           {lastSubmissionTime && (
             <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-              <span>Last evaluated: {lastSubmissionTime}</span>
+              <span>Last analyzed: {lastSubmissionTime}</span>
             </div>
           )}
         </div>
 
         {/* Two-Column Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column: Customer Intake Form (4 cols on lg) */}
-          <div className="lg:col-span-4 sticky top-24">
-            <CustomerForm onSubmit={handleAnalyze} isLoading={isLoading} />
+          {/* Left Column: Customer ID Lookup (4 cols on lg) */}
+          <div className="lg:col-span-4 sticky top-24 space-y-6">
+            <CustomerForm
+              onSubmit={handleAnalyze}
+              isLoading={isLoading}
+              onCustomerIdChange={setSelectedProfile}
+              initialCustomerId="CUST-1001"
+            />
           </div>
 
-          {/* Right Column: AI Analysis & Risk Results (8 cols on lg) */}
+          {/* Right Column: Profile & Analytics (8 cols on lg) */}
           <div className="lg:col-span-8 space-y-6">
             {/* Error Banner */}
             {error && (
@@ -123,12 +125,17 @@ export default function Dashboard() {
                   <span>{error}</span>
                 </div>
                 <button
-                  onClick={() => handleAnalyze()}
+                  onClick={() => handleAnalyze(selectedProfile)}
                   className="px-2.5 py-1 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 transition-colors"
                 >
                   Retry
                 </button>
               </div>
+            )}
+
+            {/* Fetched Customer Profile Card */}
+            {selectedProfile && (
+              <CustomerProfileCard profile={selectedProfile} />
             )}
 
             {/* Loading State */}
@@ -137,7 +144,7 @@ export default function Dashboard() {
             {/* Results Content */}
             {!isLoading && result && (
               <div className="space-y-6">
-                {/* Upper Results: Risk Score Card & Contributing Risk Factors */}
+                {/* Upper Results: Risk Score & Contributing Risk Factors */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
                   <div className="md:col-span-6">
                     <RiskCard
@@ -149,6 +156,12 @@ export default function Dashboard() {
                     <RiskFactors factors={result.riskFactors} />
                   </div>
                 </div>
+
+                {/* Visual Charts & Graphs: Donut Exposure & Dimension Benchmarks */}
+                <RiskCharts
+                  dimensionScores={result.dimensionScores}
+                  exposureDistribution={result.exposureDistribution}
+                />
 
                 {/* Plan Suitability Evaluation (Strictly: Predicted suitability) */}
                 <PlanCard plans={result.plans} />
