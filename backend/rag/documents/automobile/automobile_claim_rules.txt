@@ -1,0 +1,5 @@
+[AUTOMOBILE CLAIMS & ADJUDICATION RULES]
+1. First-Party Damage & Deductibles: Compulsory deductible applies to all own-damage claims. Voluntary deductibles reduce upfront policy cost but require higher out-of-pocket settlement.
+2. Zero Depreciation / Bumper-to-Bumper: Only vehicles under 5 years old are eligible for zero depreciation add-on coverage on metal and plastic component replacements.
+3. No-Claim Bonus (NCB): NCB tiers range from 20% to 50% for claim-free policy years. Making an at-fault claim resets or downgrades the accumulated NCB tier.
+4. Total Loss Evaluation: Constructive total loss is declared when repair estimates exceed 75% of the vehicle's Insured Declared Value (IDV).

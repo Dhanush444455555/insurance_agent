@@ -8,6 +8,7 @@ import RiskCharts from '../components/RiskCharts';
 import PlanCard from '../components/PlanCard';
 import AIReport from '../components/AIReport';
 import LoadingState from '../components/LoadingState';
+import AIChatBot from '../components/AIChatBot';
 import { analyzeRisk, getCustomerById } from '../services/api';
 
 export default function Dashboard() {
@@ -16,6 +17,7 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [lastSubmissionTime, setLastSubmissionTime] = useState(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Initial demonstration load with default CUST-1001
   useEffect(() => {
@@ -66,18 +68,32 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* System Badges */}
+          {/* System Badges & Copilot Button */}
           <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span className="text-slate-300 font-mono text-[11px]">Member 4: Frontend Ready</span>
-            </div>
-
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300">
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300">
               <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden sm:inline text-slate-400">Architecture:</span>
+              <span className="text-slate-400">Pipeline:</span>
               <span className="font-mono text-cyan-300 text-[11px]">FastAPI + LangGraph + RAG</span>
             </div>
+
+            {/* Top Right Gemini-Style Chatbot Button */}
+            <button
+              onClick={() => setIsChatOpen(true)}
+              className="relative group flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500/10 via-indigo-500/15 to-purple-500/20 hover:from-cyan-500/20 hover:via-indigo-500/25 hover:to-purple-500/30 border border-cyan-500/30 hover:border-cyan-400/60 text-slate-100 shadow-md shadow-cyan-500/10 transition-all duration-200 hover:scale-105 active:scale-95"
+            >
+              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-cyan-500 via-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+              </div>
+              <div className="text-left">
+                <span className="block text-xs font-bold bg-gradient-to-r from-cyan-300 to-indigo-200 bg-clip-text text-transparent">
+                  Ask AI Copilot
+                </span>
+              </div>
+              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
+              </span>
+            </button>
           </div>
         </div>
       </header>
@@ -176,6 +192,20 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      {/* Floating Bottom-Right Quick Chat Launcher */}
+      {!isChatOpen && (
+        <button
+          onClick={() => setIsChatOpen(true)}
+          className="fixed bottom-6 right-6 z-30 p-3.5 rounded-full bg-gradient-to-tr from-cyan-500 via-indigo-500 to-purple-600 text-white shadow-xl shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-110 active:scale-95 transition-all flex items-center justify-center border border-white/20"
+          title="Open InsureAI Copilot"
+        >
+          <Sparkles className="w-5 h-5 animate-spin-slow" />
+        </button>
+      )}
+
+      {/* Side-Panel Gemini-Style AI Chatbot Drawer */}
+      <AIChatBot isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
   );
 }

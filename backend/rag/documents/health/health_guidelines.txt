@@ -1,0 +1,6 @@
+[HEALTH UNDERWRITING GUIDELINES]
+1. Age Factor: Applicants under 30 are considered low health risk. Ages 30-50 are moderate risk. Ages 50+ carry higher health risk profiles and may require additional medical screening.
+2. Pre-existing Conditions: Chronic conditions such as hypertension, diabetes, or cardiovascular issues increase the risk classification by at least one tier.
+3. Lifestyle & BMI: A BMI between 18.5 and 24.9 is optimal. BMI > 30 (obesity) or active tobacco/smoking habits increase risk score and premium loading.
+4. Preventive Health: Annual health check-ups and active fitness tracking qualify applicants for preferred health tier discounts.
+5. Family History: Early onset of hereditary diseases (heart disease, cancer) in first-degree relatives before age 55 warrants careful risk assessment.

@@ -1,9 +1,11 @@
 /**
  * API service for communicating with the backend risk evaluation service.
- * Endpoint: POST /api/analyze-risk
+ * Endpoints:
+ * - POST /api/analyze-risk
+ * - POST /api/chat
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 /**
  * Pre-loaded synthetic customer database.
@@ -321,14 +323,15 @@ function generateDynamicAssessment(customerData) {
  */
 export async function analyzeRisk(customerData) {
   const payload = {
-    customer_id: customerData.customerId,
-    age: Number(customerData.age),
-    income: Number(customerData.income),
-    claims_count: Number(customerData.claimsCount),
-    total_claim_amount: Number(customerData.totalClaimAmount),
-    location_risk: customerData.locationRisk,
-    vehicle_risk: customerData.vehicleRisk,
-    required_coverage: customerData.requiredCoverage,
+    customer_id: customerData.customerId || 'CUST-DEMO',
+    insurance_type: (customerData.insuranceType || 'HEALTH').toUpperCase(),
+    age: Number(customerData.age) || 30,
+    income: Number(customerData.income) || 50000,
+    claims_count: Number(customerData.claimsCount) || 0,
+    total_claim_amount: Number(customerData.totalClaimAmount) || 0,
+    location_risk: (customerData.locationRisk || 'MEDIUM').toUpperCase(),
+    vehicle_risk: (customerData.vehicleRisk || 'MEDIUM').toUpperCase(),
+    required_coverage: customerData.requiredCoverage || 'Comprehensive',
   };
 
   try {
@@ -381,5 +384,42 @@ export async function analyzeRisk(customerData) {
   } catch (err) {
     console.info('Backend unreachable. Executing client-side risk engine fallback:', err.message);
     return generateDynamicAssessment(customerData);
+  }
+}
+
+/**
+ * AI Copilot Chat Assistant: POST /api/chat
+ */
+export async function sendChatMessage(message, history = []) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ message, history }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.reply;
+    }
+  } catch (e) {
+    console.warn('Backend chat offline, generating local response');
+  }
+
+  return "I'm your InsureAI Copilot! Based on our underwriting guidelines, risk assessment evaluates health disclosures, vehicle metrics, and mortality actuarial tables. What specific policy question can I answer for you?";
+}
+
+/**
+ * Optional utility to verify backend health
+ */
+export async function checkBackendHealth() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/health`, { method: 'GET' });
+    return res.ok;
+  } catch {
+    return false;
   }
 }
