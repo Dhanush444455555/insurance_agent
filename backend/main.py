@@ -7,6 +7,14 @@ Supports:
 - LIFE Insurance
 """
 
+import os
+import sys
+
+# Ensure repository root is in sys.path regardless of execution directory
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -73,5 +81,5 @@ def root_health():
 
 if __name__ == "__main__":
     import uvicorn
-    logger.info("Starting Insurance Risk AI Backend on http://0.0.0.0:8000")
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
+    logger.info("Starting Insurance Risk AI Backend on http://127.0.0.1:8000")
+    uvicorn.run(app, host="127.0.0.1", port=8000)
